@@ -1,6 +1,7 @@
 'use strict';
 
  const http = require('http');
+const { isNumber } = require('util');
 
  const port = 9999;
  const statusNotFound = 404;
@@ -15,7 +16,35 @@
      response.writeHead(statusOk,{'Content-Type':'application/json'});
      response.end(JSON.stringify(posts));
  });
- metods.set('/posts.getById',function(request,response){});
+ metods.set('/posts.getById',function(request,response){
+      const url = new URL(request.url,`https://${request.headers.host}`);
+
+      const searchParams = url.searchParams;
+      
+      const idString = searchParams.get('id');
+      const id = Number(idString);
+
+      if(!searchParams.has('id') || Number.isNaN(id)===true){
+          response.writeHead(statusBadRequest);
+          response.end();
+          return;
+      }
+ 
+       for (let i = 0; i < posts.length; i++) {
+          const post = posts[i];
+     
+           if(post.Id === id){
+            response.writeHead(statusOk,{'Content-Type':'application/json'});
+            response.end(JSON.stringify(post));
+            return;
+           }
+
+           response.writeHead(statusNotFound);
+           response.end();
+       }
+
+       
+ });
  metods.set('/posts.post',function(request,response){
 
        const url = new URL(request.url, `http://${request.headers.host}`);
@@ -39,14 +68,12 @@
 
       posts.unshift(post);
         response.writeHead(statusOk,{'Content-Type':'application/json'});
-        response.end(JSON.stringify(posts));
+        response.end(JSON.stringify(post));
 
 
  });
  metods.set('/posts.edit',function(request,response){});
  metods.set('/posts.delete',function(request,response){});
-
-
 
 
  const server = http.createServer(function(request,response){
